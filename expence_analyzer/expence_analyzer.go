@@ -15,19 +15,11 @@ type Expense struct {
 func main() {
 	var expenses []Expense
 
-	const commands = 
-	`
-	1. Добавить расход
-	2. Показать все расходы
-	3. Показать статистику
-	0. Выйти
-	`
-
 	for {
-		fmt.Println(commands)
-		fmt.Print("\nВыберите действие: ")
-
-		input := scan()
+		// fmt.Println(commands)
+		
+		
+		input := getUserCommand()
 
 		switch(input) {
 			case "1":
@@ -44,10 +36,8 @@ func main() {
 				}
 				fmt.Print("Введите категорию: ")
 				category := scan()
-				// Тут добавлять расход в объект
 				expenses = append(expenses, Expense{Amount: amount, Category: category})
 				fmt.Println("Расход добавлен.")
-				// fmt.Printf("Расход %v, категория %v\n", amount, category)
 			case "2":
 				printAmounts(expenses)
 			case "3":
@@ -61,6 +51,19 @@ func main() {
 		}
 	}
 	
+}
+
+func getUserCommand() string {
+	commands := []string{"Выйти", "Добавить расход", "Показать все расходы", "Показать статистику"}
+
+	fmt.Println("\nСписок действий:")
+	for i, command := range commands {
+		fmt.Printf("\t%v. %v\n", i, command)
+	}
+
+	fmt.Print("\nВыберите действие: ")
+	input := scan()
+	return input
 }
 
 func scan() string {
@@ -78,12 +81,24 @@ func scan() string {
 }
 
 func printAmounts(expenses []Expense) {
-	fmt.Println("Список расходов")
-	fmt.Println(expenses)
+	if len(expenses) == 0 {
+		fmt.Println("Расходов нет.")
+		return
+	}
+	printDivider()
+	fmt.Println("Список расходов:")
+	for i, expense := range expenses {
+		fmt.Printf("\t%v. %v - %.2f руб.\n", i + 1, expense.Category, expense.Amount)
+	}
+	printDivider()
 }
 
 func printStatistic() {
 	fmt.Println("Статистика расходов")
+}
+
+func printDivider() {
+	fmt.Println("\n\t=================")
 }
 
 // 2. Просмотр расходов
