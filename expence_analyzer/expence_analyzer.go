@@ -7,8 +7,15 @@ import (
 	"strconv"
 )
 
+type Expense struct {
+	Amount float64
+	Category string
+}
+
 func main() {
-	var commands = 
+	var expenses []Expense
+
+	const commands = 
 	`
 	1. Добавить расход
 	2. Показать все расходы
@@ -26,20 +33,25 @@ func main() {
 			case "1":
 				fmt.Print("\nВведите сумму: ")
 				amountInput := scan()
-				amount, err := strconv.Atoi(amountInput)
+				amount, err := strconv.ParseFloat(amountInput, 64)
 				if err != nil {
 					fmt.Println("Введено не число. Попробуйте еще раз.")
+					continue
+				}
+				if amount < 1 {
+					fmt.Print("Расход должен быть больше 0.\n")
 					continue
 				}
 				fmt.Print("Введите категорию: ")
 				category := scan()
 				// Тут добавлять расход в объект
+				expenses = append(expenses, Expense{Amount: amount, Category: category})
 				fmt.Println("Расход добавлен.")
-				fmt.Printf("Расход %v, категория %v\n", amount, category)
+				// fmt.Printf("Расход %v, категория %v\n", amount, category)
 			case "2":
-				fmt.Println("Показать все расходы")
+				printAmounts(expenses)
 			case "3":
-				fmt.Println("Показать статистику")
+				printStatistic()
 			case "0": 
 				fmt.Println("Выход.")
 				return
@@ -64,3 +76,34 @@ func scan() string {
 
 	return input
 }
+
+func printAmounts(expenses []Expense) {
+	fmt.Println("Список расходов")
+	fmt.Println(expenses)
+}
+
+func printStatistic() {
+	fmt.Println("Статистика расходов")
+}
+
+// 2. Просмотр расходов
+
+// Покажи все записи в порядке добавления:
+// 1. еда — 450.00 руб.
+// 2. транспорт — 100.00 руб.
+// 3. еда — 250.00 руб.
+// 4. развлечения — 1200.00 руб.
+// Если записей нет, выведи: Расходов пока нет.
+
+// 3. Статистика
+
+// Для примера выше:
+// Количество расходов: 4
+// Общая сумма: 2000.00 руб.
+// Средний расход: 500.00 руб.
+
+// По категориям:
+// еда: 700.00 руб.
+// транспорт: 100.00 руб.
+// развлечения: 1200.00 руб.
+// Средний расход здесь — общая сумма, делённая на количество записей, а не на количество категорий. При отсутствии записей делить на ноль нельзя — достаточно сообщения об отсутствии расходов.
