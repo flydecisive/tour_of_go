@@ -3,8 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
+	"slices"
 	"strconv"
+	"strings"
 )
 
 type Expense struct {
@@ -12,36 +15,49 @@ type Expense struct {
 	Category string
 }
 
+var scanner = bufio.NewScanner(os.Stdin)
+
 func main() {
 	var expenses []Expense
-
+	
 	for {
-		// fmt.Println(commands)
-		
-		
-		input := getUserCommand()
+		input, ok := getUserCommand()
+		if !ok {
+    		return
+		}
 
 		switch(input) {
 			case "1":
 				fmt.Print("\nВведите сумму: ")
-				amountInput := scan()
+				amountInput, ok := scan(scanner)
+				if !ok {
+					return
+				}
 				amount, err := strconv.ParseFloat(amountInput, 64)
 				if err != nil {
 					fmt.Println("Введено не число. Попробуйте еще раз.")
 					continue
 				}
-				if amount < 1 {
+				if math.IsNaN(amount) || math.IsInf(amount, 0) || amount <= 0 {
 					fmt.Print("Расход должен быть больше 0.\n")
 					continue
 				}
 				fmt.Print("Введите категорию: ")
-				category := scan()
+				category, ok := scan(scanner)
+				if !ok {
+					return
+				}
+				category = strings.TrimSpace(category)
+				if category == "" {
+					fmt.Println("Категория не должна быть пустой.")
+					continue
+				}
 				expenses = append(expenses, Expense{Amount: amount, Category: category})
 				fmt.Println("Расход добавлен.")
 			case "2":
 				printAmounts(expenses)
 			case "3":
-				printStatistic()
+				printStatistic(expenses)
 			case "0": 
 				fmt.Println("Выход.")
 				return
@@ -53,7 +69,7 @@ func main() {
 	
 }
 
-func getUserCommand() string {
+func getUserCommand() (string, bool) {
 	commands := []string{"Выйти", "Добавить расход", "Показать все расходы", "Показать статистику"}
 
 	fmt.Println("\nСписок действий:")
@@ -62,22 +78,20 @@ func getUserCommand() string {
 	}
 
 	fmt.Print("\nВыберите действие: ")
-	input := scan()
-	return input
+
+	return scan(scanner)
 }
 
-func scan() string {
-	scanner := bufio.NewScanner(os.Stdin)
-
+func scan(scanner *bufio.Scanner) (string, bool) {
 	if !scanner.Scan() {
 		if err:= scanner.Err(); err != nil {
 			fmt.Fprintln(os.Stderr, "Ошибка ввода. Попробуйте еще раз.")
 		}
+
+		return "", false
 	}
 
-	input := scanner.Text()
-
-	return input
+	return scanner.Text(), true
 }
 
 func printAmounts(expenses []Expense) {
@@ -93,32 +107,43 @@ func printAmounts(expenses []Expense) {
 	printDivider()
 }
 
-func printStatistic() {
-	fmt.Println("Статистика расходов")
+func printStatistic(expenses []Expense) {
+	var expensesCount = float64(len(expenses))
+	var expensesTotalSum float64 = 0
+	var expensesMid float64
+	var categories []string
+
+	if len(expenses) == 0 {
+		fmt.Println("Расходов нет.")
+		return
+	}
+
+	for _, expense := range expenses {
+		expensesTotalSum += expense.Amount
+		if !slices.Contains(categories, expense.Category) {
+			categories = append(categories, expense.Category)
+		}
+	}
+	expensesMid = expensesTotalSum / expensesCount
+	printDivider()
+	fmt.Println("Статистика расходов:")
+	fmt.Printf("\tКоличество расходов: %v\n", expensesCount)
+	fmt.Printf("\tОбщая сумма: %.2f руб.\n", expensesTotalSum)
+	fmt.Printf("\tСредний расход: %.2f руб.\n", expensesMid)
+
+	fmt.Println("\nПо категориям:")
+	for _, category := range categories {
+		sumForCategory := 0.0
+		for _, expense := range expenses {
+			if expense.Category == category {
+				sumForCategory += expense.Amount
+			}
+		}
+		fmt.Printf("\t%v: %.2f руб.\n", category, sumForCategory)
+	}
+	printDivider()
 }
 
 func printDivider() {
 	fmt.Println("\n\t=================")
 }
-
-// 2. Просмотр расходов
-
-// Покажи все записи в порядке добавления:
-// 1. еда — 450.00 руб.
-// 2. транспорт — 100.00 руб.
-// 3. еда — 250.00 руб.
-// 4. развлечения — 1200.00 руб.
-// Если записей нет, выведи: Расходов пока нет.
-
-// 3. Статистика
-
-// Для примера выше:
-// Количество расходов: 4
-// Общая сумма: 2000.00 руб.
-// Средний расход: 500.00 руб.
-
-// По категориям:
-// еда: 700.00 руб.
-// транспорт: 100.00 руб.
-// развлечения: 1200.00 руб.
-// Средний расход здесь — общая сумма, делённая на количество записей, а не на количество категорий. При отсутствии записей делить на ноль нельзя — достаточно сообщения об отсутствии расходов.
